@@ -1,0 +1,80 @@
+﻿class inherited UnitTesting.Suite "Набор для тестирования класса для работы с экранированием";
+
+inclass
+
+
+  proc test_escape(case: UnitTesting.Case);
+
+    var esc: StringEscaper;
+
+    with case do
+
+
+      esc = StringEscaper.new;
+
+      assert_equal(  esc.escape('"'),     '\"', 'default');
+      assert_equal(  esc.escape('\"'),    '\\\"');
+      assert_equal(  esc.escape('\\"'),   '\\\\\"');
+      assert_equal(  esc.escape('\\\"'),  '\\\\\\\"');
+
+      assert_equal(  esc.escape('"test_string"'),    '\"test_string\"');
+      assert_equal(  esc.escape('""test_string""'),  '\"\"test_string\"\"');
+      assert_equal(  esc.escape('\"test_string\"'),  '\\\"test_string\\\"');
+      assert_equal(  esc.escape('/"test_string/"'),  '\/\"test_string\/\"');
+
+      assert_equal(  esc.escape('\\\"test_string\\\"'),     '\\\\\\\"test_string\\\\\\\"');
+      assert_equal(  esc.escape('\t\t /"test_string/"//'),  '\\t\\t \/\"test_string\/\"\/\/');
+
+      assert_equal(  esc.escape('\u1234 \u1x23'),  '\\u1234 \u1x23');
+
+
+      esc = StringEscaper.new.escape_once(true);
+
+      assert_equal(  esc.escape('"'),      '\"', 'escape_once');
+      assert_equal(  esc.escape('\"'),     '\"');
+      assert_equal(  esc.escape('\\"'),    '\\\"');
+      assert_equal(  esc.escape('\\\"'),    '\\\"');
+
+      assert_equal(  esc.escape('"test_string"'),    '\"test_string\"');
+      assert_equal(  esc.escape('""test_string""'),  '\"\"test_string\"\"');
+      assert_equal(  esc.escape('\"test_string\"'),  '\"test_string\"');
+      assert_equal(  esc.escape('/"test_string/"'),  '\/\"test_string\/\"');
+
+      assert_equal(  esc.escape('\\\"test_string\\\"'),     '\\\"test_string\\\"');
+      assert_equal(  esc.escape('\t\t /"test_string/"//'),  '\\t\\t \/\"test_string\/\"\/\/');
+
+      assert_equal(  esc.escape('\ \t \u1234 \u1x34'),  '\\ \\t \\u1234 \u1x34');
+      assert_equal(  esc.escape('\\ \\t \\u1234 \\u1x34'),  '\\ \\t \\u1234 \\u1x34');
+    end;
+  end;
+
+
+  proc test_unescape(case: UnitTesting.Case);
+
+    var esc: StringEscaper;
+
+    with case do
+
+      esc = StringEscaper.new;
+
+      assert_equal(  esc.unescape('"'),      '"');
+      assert_equal(  esc.unescape('\"'),     '"');
+      assert_equal(  esc.unescape('\\"'),    '\"');
+      assert_equal(  esc.unescape('\\\"'),   '\"');
+      assert_equal(  esc.unescape('\\\\"'),  '\\"');
+
+      assert_equal(  esc.unescape('\"test_string\"'),      '"test_string"');
+      assert_equal(  esc.unescape('\"\"test_string\"\"'),  '""test_string""');
+      assert_equal(  esc.unescape('\/\"test_string\/\"'),  '/"test_string/"');
+      assert_equal(  esc.unescape('\\\"test_string\\\"'),  '\"test_string\"');
+
+      assert_equal(  esc.unescape('\\foo \"bar'),  '\foo "bar', '\f является специальной последовательностью');
+
+      assert_equal(  esc.unescape('\\t\\t \/\"test_string\/\"\/\/'),    '\t\t /"test_string/"//'  );
+      assert_equal(  esc.unescape('\\t\\t \\/\"test_string\/\"\\/\/'),  '\t\t \/"test_string/"\//'  );
+      assert_equal(  esc.unescape('\\t\\t \/\"test_string\/\"\/\/'),    '\t\t /"test_string/"//'  );
+
+      assert_equal(  esc.unescape('\\u1234 \\u1x23'),  '\u1234 \u1x23');
+    end;
+  end;
+end

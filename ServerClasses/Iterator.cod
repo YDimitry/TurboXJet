@@ -1,0 +1,94 @@
+﻿class "Класс для итерации";
+
+inclass
+
+
+  func new(iterator_from, iterator_to: integer; iterator_step: integer = 1): Iterator;
+    
+    result = self.create;
+
+    result.__from = iterator_from;
+    result.__to   = iterator_to;
+    result.__step = iterator_step;
+    result.__to_begin;
+  end;
+
+
+  func new_child(parent: variant; iterator_from, iterator_to: integer; iterator_step: integer = 1): Iterator;
+    
+    result = self.create;
+
+    result.__parent = parent;
+    result.__from   = iterator_from;
+    result.__to     = iterator_to;
+    result.__step   = iterator_step;
+    result.__to_begin;
+  end;
+
+inobject
+
+
+  var __parent: variant;
+  var __from:   integer;
+  var __to:     integer;
+  var __step:   integer;
+  var __index:  integer;
+
+
+  func __self: Iterator;
+    
+    return self;
+  end;
+
+
+  func __to_begin: boolean;
+    
+    self.__index = self.__from -self.__step;
+    return true;
+  end;
+
+
+  func __to_end: boolean;
+
+    self.__index = self.__to +self.__step;
+    return true;
+  end;
+
+
+  func __at_begin: boolean;
+    
+    return self.__index = self.__from;
+  end;
+
+
+  func __at_end: boolean;
+    
+    return self.__index = self.__to;
+  end;
+
+
+  func __next: boolean;
+
+    self.__index = self.__index +self.__step;
+    return (self.__step > 0 and self.__index <= self.__to) or (self.__step < 0 and self.__index >= self.__to);
+  end;
+
+
+  func __previous: boolean;
+
+    self.__index = self.__index -self.__step;
+    return (self.__step > 0 and self.__index >= self.__from) or (self.__step < 0 and self.__index <= self.__from);
+  end;
+
+
+  func __next_loop: boolean;
+    
+    return self.__next or (self.__to_begin and self.__next);
+  end;
+
+
+  func __previous_loop: boolean;
+    
+    return self.__previous or (self.__to_end and self.__previous);
+  end;
+end

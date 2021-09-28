@@ -1,0 +1,44 @@
+﻿class "Класс для работы с числами";
+import classes Functions.Array;
+
+inclass
+
+
+  func math_abs(number: real): real;
+    
+    return Kernel.Mathematic.abs(number);
+  end;
+
+
+  func math_floor(number: real): real;
+
+    return Kernel.Mathematic.trunc(number);
+  end;
+
+
+  func math_ceil(number: real): real;
+
+    result = Kernel.Mathematic.trunc(number);
+    result = result +if(number -result = 0, 0, 1);
+
+    return result;
+  end;
+
+
+  func math_round(number: real): real;
+
+    return Kernel.Mathematic.round(number);
+  end;
+
+
+  func math_min(numbers: real[]): real;
+
+    return Kernel.System.min(numbers);
+  end;
+
+
+  func math_max(numbers: real[]): real;
+
+    return Kernel.System.max(numbers);
+  end;
+end

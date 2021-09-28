@@ -1,0 +1,399 @@
+﻿class "Класс для работы со строками";
+import classes Functions.Variable, Functions.Array, Functions.Indexing, Functions.Math;
+
+inclass
+
+
+  -- константы для метода str_pad
+  type str_pad_direction = (
+    STR_PAD_LEFT,
+    STR_PAD_RIGHT,
+    STR_PAD_BOTH
+  );
+
+
+  -- константы для метода str_trim
+  type str_trim_direction = (
+    STR_TRIM_LEFT,
+    STR_TRIM_RIGHT,
+    STR_TRIM_BOTH
+  );
+
+
+  -- константы для метода str_pos
+  type str_pos_result = (
+    STR_POS_OFFSET = 1,
+    STR_POS_LENGTH = 2
+  );
+
+
+  type str_method_find = Methods.Functions.String.Find;
+
+
+  -- возвращает значение value, приведённое к строке
+  func str_from(const value: variant): string;
+    
+    return Kernel.System.str(value);
+  end;
+
+
+  -- возвращает длину строки str
+  func str_length(const str: string): integer;
+    
+    return Kernel.System.length(str);
+  end;
+
+
+  -- возвращает истину, если строка str не является пустой
+  func str_has_content(const str: string): boolean;
+    
+    return str_length(str) <> 0;
+  end;
+
+
+  func str_is_set(const str: string; index: integer): boolean;
+    
+    return 1 <= index and index <= str_length(str);
+  end;
+
+
+  -- возвращает символ в строке str по индексу index, если индекс находится в пределах строки, иначе пустую строку
+  func str_char_at(const str: string; index: integer; default_value: string = ""): string;
+
+    index = handle_offset(index, str_length(str));
+    return if (str_is_set(str, index), str[index], default_value);
+  end;
+
+
+  -- возвращает подстроку с началом в offset и длиной length
+  func str_substr(const str: string; offset: integer = 1; length: variant = nil): string;
+
+    if offset = 1 and var_identical(length, nil) then return str; end;
+
+    offset = handle_offset(offset, str_length(str));
+
+    if var_identical(length, nil) then
+      result = Kernel.System.substr(str, offset);
+    else
+      result = Kernel.System.substr(str, offset, handle_length(offset, length, str_length(str)));
+    end;
+
+    return result;
+  end;
+
+
+  func str_pos(str: string; value: string; offset: integer = 1): integer;
+
+    return self.str_pos_any(str, [value], offset)[STR_POS_OFFSET];
+  end;
+
+
+  func str_pos_any(str: string; values: string[]; offset: integer = 1): integer[];
+
+    var i: integer;
+
+    offset = handle_offset(offset, str_length(str));
+
+    for offset = offset..str_length(str) do
+
+      with array_each(values) do
+        while __next do
+
+          if offset +str_length(__item) -1 <= str_length(str) then
+
+            for i = 1..str_length(__item) do
+              if str_char_at(__item, i) <> str_char_at(str, offset +i -1) then break; end;
+              if i = str_length(__item) then return [offset, str_length(__item)]; end;
+            end;
+          end;
+        end;
+      end;
+    end;
+
+    return [-1, 0];
+  end;
+
+
+  -- возвращает истину, если в строке str встречается значение из value
+  func str_contains(const str, value: string; offset: integer = 1): boolean;
+    
+    return str_contains_any(str, [value], offset);
+  end;
+
+
+  func str_contains_any(const str: string; values: string[]; offset: integer = 1): boolean;
+    
+    return str_pos_any(str, values, offset) <> [-1, 0];
+  end;
+
+
+  func str_starts_with(const str: string; value: string; offset: integer = 1): boolean;
+
+    return str_starts_with_any(str, [value], offset);
+  end;
+
+
+  func str_starts_with_any(const str: string; values: string[]; offset: integer = 1): boolean;
+
+    var i: integer;
+
+    offset = handle_offset(offset, str_length(str));
+
+    with array_each(values) do
+      while __next do
+
+        if offset +str_length(__item) -1 <= str_length(str) then
+
+          for i = 1..str_length(__item) do
+            if str_char_at(__item, i) <> str_char_at(str, offset +i -1) then break; end;
+            if i = str_length(__item) then return true; end;
+          end;
+        end;
+      end;
+    end;
+
+    return false;
+  end;
+
+
+  func str_ends_with(const str: string; value: string; offset: integer = -1): boolean;
+
+    return str_ends_with_any(str, [value], offset);
+  end;
+
+
+  func str_ends_with_any(const str: string; values: string[]; offset: integer = -1): boolean;
+
+    var i: integer;
+
+    offset = handle_offset(offset, str_length(str));
+
+    with array_each(values) do
+      while __next do
+
+        if 1 <= offset -str_length(__item) +1 then
+
+          for i = 1..str_length(__item) do
+            if str_char_at(__item, -i) <> str_char_at(str, offset -i +1) then break; end;
+            if i = str_length(__item) then return true; end;
+          end;
+        end;
+      end;
+    end;
+
+    return false;
+  end;
+
+
+  -- возвращает объект класса-обёртки для поиска подстрок
+  func str_find(const str: string; value: variant): str_method_find;
+
+    return str_method_find.new(str, [value]);
+  end;
+
+
+  func str_find_any(const str: string; values: variant[]): str_method_find;
+
+    return str_method_find.new(str, values);
+  end;
+
+
+  -- возвращает строку str, повторённую количество раз count
+  func str_repeat(const str: string; count: integer): string;
+    
+    return Kernel.System.repstr(str, count);
+  end;
+
+
+  -- возвращает строку str, дополненную последовательностью value по краям
+  func str_pad(const str: string; direction: str_pad_direction; const value: string; length: integer): string;
+
+    var count: integer;
+
+    -- в случае длины меньше 1 вернём пустую строку
+    if length < 1 then return ""; end;
+
+    -- в зависимости от направления
+    if direction = STR_PAD_LEFT then
+
+      count = var_int(math_ceil((length -str_length(str)) /str_length(value)));
+
+      -- заполним строку слева и выделим подстроку справа
+      result = str_repeat(value, count) +str;
+      result = str_substr(result, -length, length);
+
+    elsif direction = STR_PAD_RIGHT then
+
+      count = var_int(math_ceil((length -str_length(str)) /str_length(value)));
+
+      -- заполним строку справа и выделим подстроку слева
+      result = str +str_repeat(value, count);
+      result = str_substr(result, 1, length);
+
+    elsif direction = STR_PAD_BOTH then
+
+      count = var_int(math_ceil((length -str_length(str)) /(str_length(value) *2)));
+
+      -- заполним строку с обоих сторон и выделим подстроку по центру
+      result = str_repeat(value, count) +str +str_repeat(value, count);
+      result = str_substr(result, var_int(math_ceil((str_length(result) -length) /2)) +1, length);
+    end;
+
+    return result;
+  end;
+
+
+  func str_trim(const str: string; direction: str_trim_direction; value: string = " "): string;
+
+    return str_trim_any(str, direction, [value]);
+  end;
+
+
+  func str_trim_any(const str: string; direction: str_trim_direction; values: string[] = [" "]): string;
+
+    result = str;
+
+    if direction in [STR_TRIM_LEFT, STR_TRIM_BOTH] then
+
+      with array_each(values) do
+        while __next do
+
+          if str_starts_with(result, __item) then
+            result = str_substr(result, str_length(__item) +1);
+            __to_begin;
+          end;
+        end;
+      end;
+    end;
+
+    if direction in [STR_TRIM_RIGHT, STR_TRIM_BOTH] then
+
+      with array_each(values) do
+        while __next do
+
+          if str_ends_with(result, __item) then
+            result = str_substr(result, 1, -str_length(__item));
+            __to_begin;
+          end;
+        end;
+      end;
+    end;
+
+    return result;
+  end;
+
+
+  -- возвращает строку str с заменой подстроки с началом в offset и длиной length на значение value
+  func str_insert(const str, value: string; offset: integer; length: variant = nil): string; -- обработать offset и length, перевести на использование str_substr
+
+    offset = handle_offset(offset, str_length(str));
+
+    return str_substr(str, 1, offset -1) +value +str_substr(
+             str, offset +handle_length(offset, length, str_length(str))
+           );
+  end;
+
+
+  -- заменяет подстроку с началом в offset и длиной length на значение value и возвращает удалённую подстроку
+  func str_splice(var str: string; const value: string; offset: integer; length: variant = nil): string;
+    
+    result = str_substr(str, offset, length);
+    str    = str_insert(str, value, offset, length);
+
+    return result;
+  end;
+
+
+  func str_replace(const str: string; value: variant; replacement: string): string;
+    
+    return str_replace_any(str, [value], replacement);
+  end;
+
+
+  func str_replace_any(const str: string; values: string[]; replacement: string): string;
+    
+    with str_find_any(str, values) do
+      while __next do __match = replacement; end;
+      __assign(result);
+    end;
+
+    return result;
+  end;
+
+
+  -- возвращает строку str с применением форматирования
+  func str_format(const str: string; values: variant): string;
+
+
+    func form_replacement(value: string; brackets_count: integer): string;
+      
+      result = str_repeat("{", brackets_count) +value +str_repeat("}", brackets_count);
+    end;
+
+
+    var i: integer;
+    var each_value: array_method_each;
+
+    each_value = array_each(array_from(values));
+
+    -- поищем последовательности {}
+    with str_find(str, "{}") do
+
+      while __next do
+
+        -- посчитаем соседние пары скобок
+        i = 1;
+
+        while (str_is_set(__left, str_length(__left) -i +1) and str_char_at(__left, str_length(__left) -i +1) = "{") and
+              (str_is_set(__right, i) and str_char_at(__right, i) = "}")
+        do
+          i = i +1;
+        end;
+
+        -- заменим значение в зависимости от количества скобок и наличия замен
+        __match = form_replacement(if (mod(i, 2) = 1 and each_value.__next, str_from(each_value.__item), ""), div(i, 2));
+
+        -- если нужно, обрежем соседние скобки
+        if i > 1 then
+          __left  = str_substr(__left, 1, -i +1);
+          __right = str_substr(__right, i);
+        end;
+      end;
+
+      __assign(result);
+    end;
+
+    return result;
+  end;
+
+
+  func str_explode(const str, separator: string): string[];
+
+    return str_explode_any(str, [separator]);
+  end;
+
+
+  func str_explode_any(const str: string; separators: string[]): string[];
+
+    var offset: integer;
+
+    -- зададим offset для перемещения по строке
+    offset = 1;
+
+    -- для каждого вхождения запишем подстроку от смещения до него, обновим смещение
+    -- если вхождений не осталось, запишем оставшуюся подстроку
+    with str_find_any(str, separators) do
+
+      while __next do
+        array_append(result, str_substr(__left, offset));
+        offset = str_length(__left) +str_length(__match) +1;
+      end;
+
+      array_append(result, __right);
+    end;
+
+    return result;
+  end;
+end
+
+

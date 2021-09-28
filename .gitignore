@@ -1,0 +1,15 @@
+syntax:glob
+
+*.~*
+*.\#*
+*.7z
+*.deb
+*.dsk
+*.sig
+*.orig
+syntax: glob
+ПТМК_Анализ/*
+*.bak
+*.#*
+*.rej
+compiled/*

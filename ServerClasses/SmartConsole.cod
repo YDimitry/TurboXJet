@@ -1,0 +1,69 @@
+﻿class "Класс-обёртка для работы с выводом в консоль";
+import classes Functions.Class, Functions.Array;
+
+inclass
+
+  func new: SmartConsole;
+    
+    return self.create;
+  end;
+
+inobject
+
+
+  var debug_check: boolean;
+
+
+  func pass_checks: boolean;
+    
+    return (not self.debug_check or Kernel.System.debugMode);
+  end;
+
+
+  func debug_only(state: boolean): SmartConsole;
+    
+    self.debug_check = state;
+    return self;
+  end;
+
+
+  -- выводит строку в окно сообщений
+  -- аргумент message приводится к массиву, затем складывается в строку
+  func log(message: variant): SmartConsole;
+
+    var console: class;
+        console = class_find("Console");
+
+    if console <> nil and self.pass_checks then console.trace(array_implode(array_from(message))); end;
+    return self;
+  end;
+
+
+  -- выводит массив строк в окно сообщений
+  -- аргумент messages приводится к массиву
+  func log_multi(messages: variant): SmartConsole;
+
+    var console: class;
+        console = class_find("Console");
+
+    if console <> nil and self.pass_checks then
+      
+      with array_each(array_from(messages)) do
+        while __next do console.trace(__item); end;
+      end;
+    end;
+
+    return self;
+  end;
+
+
+  -- очищает окно сообщений
+  func clear: SmartConsole;
+
+    var console: class;
+        console = class_find("Console");
+
+    if console <> nil and self.pass_checks then console.clearTrace; end;
+    return self;
+  end;
+end

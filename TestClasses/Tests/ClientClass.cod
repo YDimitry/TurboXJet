@@ -1,0 +1,16 @@
+﻿class "Клиентский класс, исполняется на сервере";
+
+inclass
+
+
+  func self_value: string;
+    
+    return "client value!";
+  end;
+
+
+  func server_value: string;
+    
+    return Tests.ServerClass.self_value;
+  end;
+end
